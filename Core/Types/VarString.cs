@@ -38,7 +38,7 @@ public class VarString : INetworkType
 
         if (bytesRead != length)
         {
-            throw new InvalidOperationException($"Failed to read string. Expected length: {length}, bytes read: {bytesRead}");
+            throw new InvalidOperationException($"Failed to read string data. Expected length: {length}, bytes read: {bytesRead}");
         }
 
         Value = Encoding.UTF8.GetString(buffer);
