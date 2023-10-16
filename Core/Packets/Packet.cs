@@ -2,7 +2,7 @@
 
 namespace Core.Packets;
 
-public class Packet : INetworkType
+public struct Packet : INetworkType
 {
     public VarInt Length { get; private set; }
 
@@ -14,10 +14,30 @@ public class Packet : INetworkType
     {
         Length = length;
         Id = id;
-        Data = new byte[length.AsInteger() - id.Length];
+        Data = new byte[length.AsInteger()];
     }
 
-    public byte[] GetBytes()
+    public Packet(VarInt length, VarInt id, byte[] data)
+    {
+        Length = length;
+        Id = id;
+        Data = data;
+    }
+
+    public static Packet FromStream(Stream stream)
+    {
+        VarInt length = VarInt.FromStream(stream);
+        VarInt id = VarInt.FromStream(stream);
+
+        int dataLength = length.AsInteger();
+
+        byte[] data = new byte[dataLength - length.Length];
+        _ = stream.Read(data, 0, dataLength);
+
+        return new(length, id, data);
+    }
+
+    public readonly byte[] GetBytes()
     {
         byte[] lengthData = Length.GetBytes();
         byte[] idData = Id.GetBytes();
@@ -48,7 +68,7 @@ public class Packet : INetworkType
         Data = dataBuffer;
     }
 
-    public void WriteToStream(Stream stream)
+    public readonly void WriteToStream(Stream stream)
     {
         Length.WriteToStream(stream);
         Id.WriteToStream(stream);

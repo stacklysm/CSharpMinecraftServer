@@ -1,6 +1,6 @@
 ﻿namespace Core.Types;
 
-public class VarLong : INetworkType
+public struct VarLong : INetworkType
 {
     private const int VARINT_MAX_ARRAY_ELEMENT_COUNT = 10;
     private const int LEAST_SIGNIFICANT_BIT_OFFSET = 7;
@@ -51,7 +51,7 @@ public class VarLong : INetworkType
         return new(value);
     }
 
-    public byte[] GetBytes()
+    public readonly byte[] GetBytes()
     {
         return InternalBuffer[0..Length];
     }
@@ -89,12 +89,12 @@ public class VarLong : INetworkType
         InternalValue = value;
     }
 
-    public void WriteToStream(Stream stream)
+    public readonly void WriteToStream(Stream stream)
     {
         stream.Write(InternalBuffer, 0, Length);
     }
 
-    public long AsLong()
+    public readonly long AsLong()
     {
         return InternalValue;
     }

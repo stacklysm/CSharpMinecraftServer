@@ -2,18 +2,42 @@
 
 namespace Core.Types;
 
-public class VarString : INetworkType
+public struct VarString : INetworkType
 {
     public string Value { get; set; }
+
+    public int Length { get; private set; }
 
     public VarString(string value)
     {
         Value = value;
+        Length = value.Length;
     }
 
-    public byte[] GetBytes()
+    public static VarString FromStream(Stream stream)
     {
-        byte[] stringLengthData = new VarInt(Value.Length).GetBytes();
+        int length = VarInt.FromStream(stream).AsInteger();
+
+        if (length < 0)
+        {
+            throw new InvalidOperationException("Invalid data format, string length was negative.");
+        }
+
+        byte[] buffer = new byte[length];
+
+        int bytesRead = stream.Read(buffer, 0, length);
+
+        if (bytesRead != length)
+        {
+            throw new InvalidOperationException($"Failed to read string data. Expected length: {length}, bytes read: {bytesRead}");
+        }
+
+        return new(Encoding.UTF8.GetString(buffer));
+    }
+
+    public readonly byte[] GetBytes()
+    {
+        byte[] stringLengthData = new VarInt(Length).GetBytes();
         byte[] stringData = Encoding.UTF8.GetBytes(Value);
         byte[] buffer = new byte[stringLengthData.Length + stringData.Length];
 
@@ -41,13 +65,14 @@ public class VarString : INetworkType
             throw new InvalidOperationException($"Failed to read string data. Expected length: {length}, bytes read: {bytesRead}");
         }
 
+        Length = length;
         Value = Encoding.UTF8.GetString(buffer);
     }
 
-    public void WriteToStream(Stream stream)
+    public readonly void WriteToStream(Stream stream)
     {
+        VarInt length = new(Length);
         byte[] data = Encoding.UTF8.GetBytes(Value);
-        VarInt length = new(data.Length);
 
         length.WriteToStream(stream);
         stream.Write(data, 0, data.Length);
