@@ -91,19 +91,7 @@ public class VarLong : INetworkType
 
     public void WriteToStream(Stream stream)
     {
-        ulong castedValue = (ulong)InternalValue;
-
-        while (true)
-        {
-            if ((castedValue & ~(ulong)SEGMENT_BITS) == 0)
-            {
-                stream.WriteByte((byte)castedValue);
-                break;
-            }
-
-            stream.WriteByte((byte)((castedValue & SEGMENT_BITS) | CONTINUE_BIT));
-            castedValue >>= LEAST_SIGNIFICANT_BIT_OFFSET;
-        }
+        stream.Write(InternalBuffer, 0, Length);
     }
 
     public long AsLong()
